@@ -7,14 +7,16 @@ from importlib.metadata import version
 
 import pytest
 
-from liminal_lib import composite
+from liminal_lib import composite, freshness
 from liminal_lib.config import load_settings
+from liminal_lib.freshness import Delay
 from liminal_lib.sources import is_archive, markets, provider, rate_window, registry, supports
+from liminal_lib.sources.archive import CryptoVenuePlugin
 from liminal_lib.sources.http import PublicClient
 from liminal_lib.symbols import resolve
 
 import liminal_plugin_bitfinex
-from liminal_plugin_bitfinex import PER_DAY, PER_RUN, TIER, BitfinexSource, bitfinex_symbol
+from liminal_plugin_bitfinex import BASE_URL, PER_DAY, PER_RUN, TIER, BitfinexPlugin, BitfinexSource, bitfinex_symbol
 
 from .conftest import FakeResponse, FakeSession
 
@@ -63,7 +65,7 @@ def test_the_app_loads_it_from_this_package_with_its_own_version():
     assert registry.api_refusal(p.api) is None
     assert not [why for where, why in registry.errors() if "bitfinex" in where or "bitfinex" in why]
     row = {r["name"]: r for r in registry.menu()}["bitfinex"]
-    assert (row["version"], row["api"]) == (version("liminal-plugin-bitfinex"), "1.6")
+    assert (row["version"], row["api"]) == (version("liminal-plugin-bitfinex"), "2.0")
 
 
 def test_it_keeps_the_facts_it_had_built_in():
@@ -77,3 +79,20 @@ def test_it_keeps_the_facts_it_had_built_in():
     assert not is_archive("bitfinex") and markets("bitfinex", s) == {"crypto": "bitfinex"}
     assert supports("bitfinex", resolve("BTCUSD")) and not supports("bitfinex", resolve("AAPL"))
     assert composite.feed_kind("bitfinex", "crypto") == "exchange"
+
+
+def test_it_is_a_class_on_the_contract_and_the_app_loads_it_as_one():
+    p = liminal_plugin_bitfinex.PLUGIN
+    assert isinstance(p, BitfinexPlugin) and isinstance(p, CryptoVenuePlugin) and p.api == "2.0" and not p.is_record
+    assert p.assets == frozenset({"crypto"}) and p.kind == "exchange"  # a crypto venue's, from its base
+    assert p.gives("build") and p.gives("view") and p.gives("carries")
+    assert not p.has_scan and not p.has_settings and not p.gives("rate") and not p.gives("markets")
+    assert p.delays == {"bitfinex-public": {"crypto": Delay("delay")}} and p.hours == {}
+    loaded = registry.reload()["bitfinex"]
+    assert type(loaded) is BitfinexPlugin and (loaded.version, loaded.api) == (version("liminal-plugin-bitfinex"), "2.0")
+    assert not [why for where, why in registry.errors() if "bitfinex" in where or "bitfinex" in why]
+    src = loaded.build(load_settings(env={}, env_file=None), 5)  # its base's build: its source on the public client
+    assert isinstance(src, BitfinexSource) and isinstance(src.client, PublicClient) and src.client.base_url == BASE_URL
+    assert freshness.plan_delay(TIER, "crypto").kind == "delay"  # its own rule (BitfinexPlugin.delays; the library's too)
+    moved = p.with_(order=1)  # a changed copy (the registry's version and origin come this way)
+    assert type(moved) is BitfinexPlugin and moved.order == 1 and p.order == 40

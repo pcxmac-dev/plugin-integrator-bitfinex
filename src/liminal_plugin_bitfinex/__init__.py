@@ -1,9 +1,10 @@
 """Bitfinex (bitfinex.com) for Liminal: crypto minute and day bars from 2013, no key.
 
-A Liminal plugin released on its own (liminal.sources.registry: Provider), registered under the
-entry point group `liminal.providers` as `bitfinex`. It relies on plugin API 1.6 and nothing of the
-app outside it (docs/ARCHITECTURE.md in liminal: "Providers are plugins"); its version is this
-distribution's (pyproject.toml), so PLUGIN.version is left empty.
+A Liminal plugin released on its own, a class on plugin API 2.0 (liminal_lib.sources.archive:
+CryptoVenuePlugin, a crypto exchange's; liminal-lib 1.3.0: what it declares class attributes, what
+it does methods), registered under the entry point group `liminal.providers` as `bitfinex`. It relies
+on nothing of the app outside the contract (docs/ARCHITECTURE.md in liminal-app: "Providers are
+plugins"); its version is this distribution's (pyproject.toml), so PLUGIN.version is left empty.
 """
 from __future__ import annotations
 
@@ -11,14 +12,14 @@ from datetime import date
 from typing import Iterator
 
 from liminal_lib.config import Tier
+from liminal_lib.freshness import Delay
 from liminal_lib.models import Instrument
 from liminal_lib.sources.archive import CRYPTO_PAIRS, EXCHANGE_FRAMES, Archive as _Archive, bounds as _bounds, crypto_pair as _pair
-from liminal_lib.sources.archive import venue_view
-from liminal_lib.sources.registry import Provider, public_client
+from liminal_lib.sources.archive import CryptoVenuePlugin
 
 BASE_URL = "https://api-pub.bitfinex.com/v2"
 # Its plan and caps (once the app's config.PUBLIC_FEEDS["bitfinex"]): all the history it holds, unless
-# CRYPTO_VENUE_DAYS limits it (venue_view). Bitfinex allows about 30 candle requests a minute.
+# CRYPTO_VENUE_DAYS limits it (CryptoVenuePlugin.view). Bitfinex allows about 30 candle requests a minute.
 TIER = Tier("bitfinex-public", requests_per_minute=20, history_years=None, history_start=date(2013, 4, 1))
 PER_RUN, PER_DAY = 300, 2000
 
@@ -79,13 +80,29 @@ class BitfinexSource(_Archive):
         return Instrument(ticker=base + quote, name=f"{base}/{quote} on Bitfinex", details={"venue": "Bitfinex"})
 
 
-PLUGIN = Provider(
-    api="1.6",  # the contract it needs (its client in it: sources.archive); its version: the distribution's
-    name="bitfinex", title="Bitfinex",
-    build=lambda settings, budget: BitfinexSource(public_client("bitfinex", BASE_URL, settings, budget)),
-    assets=frozenset({"crypto"}), order=40, about="crypto minute and day bars from 2013 (no key)",
-    tier=TIER, per_run=PER_RUN, per_day=PER_DAY, limits="about 30 candle requests per minute", kind="exchange",
-    per_request={"day": BitfinexSource.PAGE, "minute": BitfinexSource.PAGE},
-    view=venue_view("bitfinex"),
-    carries=lambda spec: spec.ticker.upper() in CRYPTO_PAIRS,
-)
+class BitfinexPlugin(CryptoVenuePlugin):
+    """The feed's plugin, a crypto exchange's (its `assets` and `kind`; its source on the contract's
+    public client at `base_url`; its view: the plan and caps, all the history it holds unless
+    CRYPTO_VENUE_DAYS limits it): what it declares as attributes, what it does as a method (the pairs
+    it carries); the contract's defaults for the rest."""
+
+    api = "2.0"  # the contract it is written for (the class contract); its version: the distribution's
+    name = "bitfinex"
+    title = "Bitfinex"
+    about = "crypto minute and day bars from 2013 (no key)"
+    order = 40
+    base_url = BASE_URL
+    source_class = BitfinexSource
+    tier = TIER
+    per_run = PER_RUN
+    per_day = PER_DAY
+    limits = "about 30 candle requests per minute"
+    per_request = {"day": BitfinexSource.PAGE, "minute": BitfinexSource.PAGE}
+    # when its data is published (the library's freshness row for its plan): each minute once it closes
+    delays = {"bitfinex-public": {"crypto": Delay("delay")}}
+
+    def carries(self, spec):
+        return spec.ticker.upper() in CRYPTO_PAIRS
+
+
+PLUGIN = BitfinexPlugin()

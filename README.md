@@ -14,7 +14,7 @@ as `package: liminal-plugin-bitfinex`, with this package's version.
 Into the app's environment, from the app's folder:
 
 ```powershell
-.venv\Scripts\python.exe -m pip install "liminal-plugin-bitfinex @ git+https://github.com/pcxmac-dev/liminal-plugin-bitfinex@v1.2.1"
+.venv\Scripts\python.exe -m pip install "liminal-plugin-bitfinex @ git+https://github.com/pcxmac-dev/liminal-plugin-bitfinex@v0.2.0"
 ```
 
 or with the app's plugins (`pip install -e ".[plugins]"` in liminal-app). The app loads it on its next
@@ -22,8 +22,9 @@ start.
 
 ## Compatibility
 
-It is written for plugin API 1.6 (`PLUGIN.api`). An app offering 1.6 or a later 1.x loads it; an
-app of another major, or one older than 1.6, leaves it out and says why on the Plugins view.
+It is written for plugin API 2.0 (`PLUGIN.api`: the class contract, `BitfinexPlugin` a
+`CryptoVenuePlugin` of liminal-lib 1.3.0 or later). An app offering 2.0 or a later 2.x loads it; an
+app of another major, or one older than 2.0, leaves it out and says why on the Plugins view.
 
 ## Develop
 
