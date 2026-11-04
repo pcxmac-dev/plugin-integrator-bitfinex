@@ -2,9 +2,11 @@
 
 ## 0.2.0 (2026-11-03)
 
-- A class on plugin API 2.0 (liminal-lib 1.3.0; the user: "all the plugins under liminal should basically
+Renamed `plugin-integrator-bitfinex` (the package `plugin_integrator_bitfinex`; it was `liminal-plugin-bitfinex`) on 2026-11-03: the naming by system (plugins are `plugin-<app>-<name>`), on liminal-libs 1.4.0 (`liminal_libs`, the library renamed with it).
+
+- A class on plugin API 2.0 (liminal-libs 1.3.0; the user: "all the plugins under liminal should basically
   follow inheritance/oop paradigm"): `BitfinexPlugin(CryptoVenuePlugin)`, a crypto exchange's plugin of
-  `liminal_lib.sources.archive` (its `assets` and `kind`; its source built on the contract's public client at
+  `liminal_libs.sources.archive` (its `assets` and `kind`; its source built on the contract's public client at
   `base_url`; its `view`, the plan and caps with all the history it holds unless `CRYPTO_VENUE_DAYS` limits
   it, once `venue_view`), what the `Provider` record declared as class attributes and its callback as a
   method (`carries`), `PLUGIN` its instance.
@@ -15,11 +17,11 @@
 
 ## 1.2.1 (2026-11-02)
 
-The plugin imports the library as `liminal_lib` and depends on liminal-lib (the app, renamed liminal-app, is no longer needed to run the tests; the user, 2026-11-02: "lets rename the app to liminal-app").
+The plugin imports the library as `liminal_libs` and depends on liminal-libs (the app, renamed liminal-charts, is no longer needed to run the tests; the user, 2026-11-02: "lets rename the app to liminal-charts").
 
 ## 1.2.0 (2026-11-01)
 
-- Released as its own package, `liminal-plugin-bitfinex`, registered under the entry point group
+- Released as its own package, `plugin-integrator-bitfinex`, registered under the entry point group
   `liminal.providers`; its version is the distribution's.
 - Its plan and request caps are in it (`TIER`, `PER_RUN`, `PER_DAY`), no longer in the app's
   `config.PUBLIC_FEEDS`; the app's `CRYPTO_VENUE_DAYS` still limits its history (`venue_view`).

@@ -1,9 +1,9 @@
 """Bitfinex (bitfinex.com) for Liminal: crypto minute and day bars from 2013, no key.
 
-A Liminal plugin released on its own, a class on plugin API 2.0 (liminal_lib.sources.archive:
-CryptoVenuePlugin, a crypto exchange's; liminal-lib 1.3.0: what it declares class attributes, what
+A Liminal plugin released on its own, a class on plugin API 2.0 (liminal_libs.sources.archive:
+CryptoVenuePlugin, a crypto exchange's; liminal-libs 1.3.0: what it declares class attributes, what
 it does methods), registered under the entry point group `liminal.providers` as `bitfinex`. It relies
-on nothing of the app outside the contract (docs/ARCHITECTURE.md in liminal-app: "Providers are
+on nothing of the app outside the contract (docs/ARCHITECTURE.md in liminal-charts: "Providers are
 plugins"); its version is this distribution's (pyproject.toml), so PLUGIN.version is left empty.
 """
 from __future__ import annotations
@@ -11,11 +11,11 @@ from __future__ import annotations
 from datetime import date
 from typing import Iterator
 
-from liminal_lib.config import Tier
-from liminal_lib.freshness import Delay
-from liminal_lib.models import Instrument
-from liminal_lib.sources.archive import CRYPTO_PAIRS, EXCHANGE_FRAMES, Archive as _Archive, bounds as _bounds, crypto_pair as _pair
-from liminal_lib.sources.archive import CryptoVenuePlugin
+from liminal_libs.config import Tier
+from liminal_libs.freshness import Delay
+from liminal_libs.models import Instrument
+from liminal_libs.sources.archive import CRYPTO_PAIRS, EXCHANGE_FRAMES, Archive as _Archive, bounds as _bounds, crypto_pair as _pair
+from liminal_libs.sources.archive import CryptoVenuePlugin
 
 BASE_URL = "https://api-pub.bitfinex.com/v2"
 # Its plan and caps (once the app's config.PUBLIC_FEEDS["bitfinex"]): all the history it holds, unless
