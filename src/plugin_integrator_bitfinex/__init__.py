@@ -1,10 +1,15 @@
 """Bitfinex (bitfinex.com) for Liminal: crypto minute and day bars from 2013, no key.
 
-A Liminal plugin released on its own, a class on plugin API 2.0 (liminal_libs.sources.archive:
+A Liminal plugin released on its own, a class on plugin API 2.2 (liminal_libs.sources.archive:
 CryptoVenuePlugin, a crypto exchange's; liminal-libs 1.3.0: what it declares class attributes, what
 it does methods), registered under the entry point group `liminal.providers` as `bitfinex`. It relies
 on nothing of the app outside the contract (docs/ARCHITECTURE.md in liminal-charts: "Providers are
 plugins"); its version is this distribution's (pyproject.toml), so PLUGIN.version is left empty.
+
+Plugin API 2.2 (liminal-libs 1.49.0; the user, 2026-11-11: "each plugin should reflect the the API its attached to, and
+present links that provide documentation"): `apis`, what it talks to (apis.py: Bitfinex's public REST API v2 with
+Bitfinex's pages, every part of it and the call it makes among the rest), and `api_facts()`, what its client learned
+while it ran (facts.py), asking nothing.
 """
 from __future__ import annotations
 
@@ -16,6 +21,10 @@ from liminal_libs.freshness import Delay
 from liminal_libs.models import Instrument
 from liminal_libs.sources.archive import CRYPTO_PAIRS, EXCHANGE_FRAMES, Archive as _Archive, bounds as _bounds, crypto_pair as _pair
 from liminal_libs.sources.archive import CryptoVenuePlugin
+
+from .apis import APIS
+from .apis import NAME as API_NAME
+from .facts import NOTES
 
 BASE_URL = "https://api-pub.bitfinex.com/v2"
 # Its plan and caps (once the app's config.PUBLIC_FEEDS["bitfinex"]): all the history it holds, unless
@@ -86,7 +95,7 @@ class BitfinexPlugin(CryptoVenuePlugin):
     CRYPTO_VENUE_DAYS limits it): what it declares as attributes, what it does as a method (the pairs
     it carries); the contract's defaults for the rest."""
 
-    api = "2.0"  # the contract it is written for (the class contract); its version: the distribution's
+    api = "2.2"  # the contract it is written for (2.2: what it attaches to, `apis`); its version: the distribution's
     name = "bitfinex"
     title = "Bitfinex"
     about = "crypto minute and day bars from 2013 (no key)"
@@ -100,6 +109,21 @@ class BitfinexPlugin(CryptoVenuePlugin):
     per_request = {"day": BitfinexSource.PAGE, "minute": BitfinexSource.PAGE}
     # when its data is published (the library's freshness row for its plan): each minute once it closes
     delays = {"bitfinex-public": {"crypto": Delay("delay")}}
+    # what it attaches to (plugin API 2.2): Bitfinex's public REST API v2 (apis.py)
+    apis = APIS
+
+    def build(self, settings, request_budget):
+        """The public feed's own build (PublicFeedPlugin.build), its client noted under the API (held weakly:
+        api_facts reads what it learned)."""
+        source = super().build(settings, request_budget)
+        NOTES.note(API_NAME, source.client)
+        return source
+
+    def api_facts(self):
+        """What its client learned of Bitfinex's public API while it ran (the requests made, the last answer's
+        clock, the rate-limit headers its server sent), from what this process already holds: nothing is asked
+        (facts.py)."""
+        return NOTES.facts(a.name for a in self.apis)
 
     def carries(self, spec):
         return spec.ticker.upper() in CRYPTO_PAIRS
